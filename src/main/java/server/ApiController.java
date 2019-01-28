@@ -1,69 +1,78 @@
 package server;
 
-import java.sql.ResultSet;
-import java.sql.Statement;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import java.time.temporal.ChronoUnit;
+import java.util.*;
+import java.time.*;
+import org.springframework.web.bind.annotation.*;
 
-import java.sql.Connection;
-import java.sql.DriverManager;
 
 @RestController
 public class ApiController {
 
-    @RequestMapping("/user")
-    public User user(@RequestParam(value="username", defaultValue="") String username, @RequestParam(value="password", defaultValue="") String password) {
+    private final String connectionURL = "jdbc:postgresql://localhost:5432/PricDB";
 
-        int userId = -1;
-        String email = null;
-        String name = null;
+    @GetMapping("/users")
+    @ResponseBody
+    public User getUserByUsernamePassword(
+            @RequestParam("username") String username,
+            @RequestParam("password") String password
+    ) {
+        return DbAccessor.getUser(username, password);
+    }
 
-        Connection c;
-        Statement stmt;
-        try {
-            Class.forName("org.postgresql.Driver");
-            c = DriverManager
-                    .getConnection("jdbc:postgresql://localhost:5432/PricDB",
-                            "postgres", "");
-            c.setAutoCommit(false);
-            System.out.println("Opened database successfully");
+    @GetMapping("/users/{userId}/paymentschedule")
+    @ResponseBody
+    public PaymentSchedule[] getUserPaymentSchedules(
+            @PathVariable int userId) {
 
-            stmt = c.createStatement();
-            ResultSet rs = stmt.executeQuery(
-                    "" +
-                            "SELECT " +
-                            "      userid," +
-                            "      username," +
-                            "      email," +
-                            "      name" +
-                            "    FROM Users" +
-                            "    WHERE" +
-                            "      username='" + username + "'" +
-                            "      AND password='" + password + "';"
-            );
+        return DbAccessor.getPaymentSchedules(userId).toArray(new PaymentSchedule[0]);
+    }
 
+    @GetMapping("/users/{userId}/payments")
+    @ResponseBody
+    public PaymentDetail getUserPaymentDetail(
+            @PathVariable int userId) {
 
-            if (rs.next()) {
-                userId = rs.getInt("userid");
-                email = rs.getString("email");
-                name = rs.getString("name");
-            }
+        List<PaymentSchedule> schedules = new ArrayList<>(DbAccessor.getPaymentSchedules(userId));
+        List<Payment> payments = new ArrayList<>(DbAccessor.getPayments(userId));
 
-            if (rs.next()) {
-                System.err.println("More than 1 user!");
-                System.exit(0);
-            }
+        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime beginningOfThisMonth = LocalDateTime.of(now.getYear(), now.getMonth(), 1, 0, 0);
 
-            rs.close();
-            stmt.close();
-            c.close();
-        } catch ( Exception e ) {
-            System.err.println( e.getClass().getName()+": "+ e.getMessage() );
-            System.exit(0);
+        // Total Contribution
+        int totalContribution = 0;
+        for (Payment p : payments) {
+            totalContribution += p.getAmount();
         }
-        System.out.println("Operation done successfully");
 
-        return new User(userId, username, name, email);
+
+        LocalDateTime dateLastContributed = payments.get(payments.size() - 1).getPaymentDate();
+        LocalDateTime nextPaymentDate = beginningOfThisMonth.plus(1, ChronoUnit.MONTHS);
+        int monthlyPayment = schedules.get(schedules.size() - 1).getMonthlyPayment();
+
+        // Expected Contribution
+        LocalDateTime startDate = schedules.get(schedules.size() - 1).getStartDate();
+        LocalDateTime endDate = nextPaymentDate;
+        int monthDiff = 0;
+        while (startDate.isBefore(endDate)) {
+            monthDiff++;
+            startDate = startDate.plus(1, ChronoUnit.MONTHS);
+        }
+
+        int expectedContribution = (monthDiff * schedules.get(schedules.size() - 1).getMonthlyPayment());
+
+        for (int i = 0; i < schedules.size() - 1; i++) {
+            startDate = schedules.get(i).getStartDate();
+            endDate = schedules.get(i+1).getStartDate();
+            monthDiff = 0;
+            while (startDate.isBefore(endDate)) {
+                monthDiff++;
+                startDate = startDate.plus(1, ChronoUnit.MONTHS);
+            }
+
+            expectedContribution += (monthDiff * schedules.get(i).getMonthlyPayment());
+        }
+
+        return new PaymentDetail(totalContribution, dateLastContributed, monthlyPayment, (expectedContribution - totalContribution), nextPaymentDate, schedules.toArray(new PaymentSchedule[0]), payments.toArray(new Payment[0]));
     }
 }
