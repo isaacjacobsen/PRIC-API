@@ -11,8 +11,12 @@ public class Payment {
         this.amount = amount;
     }
 
-    public LocalDateTime getPaymentDate() {
+    protected LocalDateTime getPaymentDateAsDate() {
         return paymentDate;
+    }
+
+    public String getPaymentDate() {
+        return paymentDate.toString();
     }
 
     public int getAmount() {

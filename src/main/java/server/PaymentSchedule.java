@@ -12,8 +12,12 @@ public class PaymentSchedule {
         this.monthlyPayment = monthlyPayment;
     }
 
-    public LocalDateTime getStartDate() {
+    protected LocalDateTime getStartDateAsDate() {
         return startDate;
+    }
+
+    public String getStartDate() {
+        return startDate.toString();
     }
 
     public int getMonthlyPayment() {

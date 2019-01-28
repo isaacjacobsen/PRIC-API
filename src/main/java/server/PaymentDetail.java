@@ -25,16 +25,20 @@ public class PaymentDetail {
         return totalContributed;
     }
 
-    public LocalDateTime getDateLastContributed() {
-        return dateLastContributed;
+    public String getDateLastContributed() {
+        return dateLastContributed.toString();
     }
 
     public int getMonthlyPayment() {
         return monthlyPayment;
     }
 
-    public LocalDateTime getNextPaymentDate() {
-        return nextPaymentDate;
+    public int getAmountOutstanding() {
+        return amountOutstanding;
+    }
+
+    public String getNextPaymentDate() {
+        return nextPaymentDate.toString();
     }
 
     public PaymentSchedule[] getPaymentSchedules() {

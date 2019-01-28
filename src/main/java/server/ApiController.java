@@ -11,6 +11,7 @@ public class ApiController {
 
     private final String connectionURL = "jdbc:postgresql://localhost:5432/PricDB";
 
+    @CrossOrigin
     @GetMapping("/users")
     @ResponseBody
     public User getUserByUsernamePassword(
@@ -20,6 +21,7 @@ public class ApiController {
         return DbAccessor.getUser(username, password);
     }
 
+    @CrossOrigin
     @GetMapping("/users/{userId}/paymentschedule")
     @ResponseBody
     public PaymentSchedule[] getUserPaymentSchedules(
@@ -28,6 +30,7 @@ public class ApiController {
         return DbAccessor.getPaymentSchedules(userId).toArray(new PaymentSchedule[0]);
     }
 
+    @CrossOrigin
     @GetMapping("/users/{userId}/payments")
     @ResponseBody
     public PaymentDetail getUserPaymentDetail(
@@ -46,12 +49,12 @@ public class ApiController {
         }
 
 
-        LocalDateTime dateLastContributed = payments.get(payments.size() - 1).getPaymentDate();
+        LocalDateTime dateLastContributed = payments.get(payments.size() - 1).getPaymentDateAsDate();
         LocalDateTime nextPaymentDate = beginningOfThisMonth.plus(1, ChronoUnit.MONTHS);
         int monthlyPayment = schedules.get(schedules.size() - 1).getMonthlyPayment();
 
         // Expected Contribution
-        LocalDateTime startDate = schedules.get(schedules.size() - 1).getStartDate();
+        LocalDateTime startDate = schedules.get(schedules.size() - 1).getStartDateAsDate();
         LocalDateTime endDate = nextPaymentDate;
         int monthDiff = 0;
         while (startDate.isBefore(endDate)) {
@@ -62,8 +65,8 @@ public class ApiController {
         int expectedContribution = (monthDiff * schedules.get(schedules.size() - 1).getMonthlyPayment());
 
         for (int i = 0; i < schedules.size() - 1; i++) {
-            startDate = schedules.get(i).getStartDate();
-            endDate = schedules.get(i+1).getStartDate();
+            startDate = schedules.get(i).getStartDateAsDate();
+            endDate = schedules.get(i+1).getStartDateAsDate();
             monthDiff = 0;
             while (startDate.isBefore(endDate)) {
                 monthDiff++;
