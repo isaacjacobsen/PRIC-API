@@ -22,17 +22,39 @@ public final class DbAccessor {
         int userId = -1;
         String email = null;
         String name = null;
+        String phone = null;
+        String profilePicPath = null;
+        String aboutMe = null;
+        ArrayList<String> positionNames = new ArrayList<>();
+        ArrayList<String> positionNamesShort = new ArrayList<>();
+        boolean isOnBoard = false;
 
         String query = "" +
-                "SELECT " +
-                "      userid," +
-                "      username," +
-                "      email," +
-                "      name" +
-                "    FROM Users" +
-                "    WHERE" +
-                "      username='" + username + "'" +
-                "      AND password='" + password + "';";
+                "   SELECT" +
+                "       agg.*," +
+                "       UP.profilepicturepath," +
+                "       UP.aboutme" +
+                "   FROM" +
+                "       (select" +
+                "           U.userid," +
+                "           U.username," +
+                "           U.email," +
+                "           U.name," +
+                "           U.phone," +
+                "           string_agg(PT.positionname, ';') AS positionnames," +
+                "           string_agg(PT.positionnameshort, ';') AS positionnamesshort," +
+                "           MAX(PT.isboardposition) AS isonboard" +
+                "       FROM Users U" +
+                "           LEFT JOIN Positions P on P.userid = U.userid" +
+                "           LEFT JOIN PositionTypes PT on PT.positiontypeid = P.positiontypeid" +
+                "       WHERE" +
+                "           U.username = '" + username + "'" +
+                "           AND U.password = '" + password + "'" +
+                "           AND P.enddate IS NULL" +
+                "           AND PT.positionname != 'Partner'" +
+                "       GROUP BY" +
+                "           U.userid) agg" +
+                "   LEFT JOIN UserProfiles UP on UP.userid = agg.userid;";
 
         Connection c;
         Statement stmt;
@@ -50,6 +72,18 @@ public final class DbAccessor {
                 userId = rs.getInt("userid");
                 email = rs.getString("email");
                 name = rs.getString("name");
+                phone = rs.getString("phone");
+                profilePicPath = rs.getString("profilepicturepath");
+                aboutMe = rs.getString("aboutMe");
+                String[] pos = rs.getString("positionnames").split(";");
+                String[] posShort = rs.getString("positionnamesshort").split(";");
+
+                for (int i = 0; i < pos.length; i++) {
+                    positionNames.add(pos[i]);
+                    positionNamesShort.add(posShort[i]);
+                }
+
+                isOnBoard = rs.getBoolean("isOnBoard");
             }
 
             if (rs.next()) {
@@ -66,7 +100,7 @@ public final class DbAccessor {
         }
         System.out.println("Operation done successfully");
 
-        return new User(userId, username, name, email);
+        return new User(userId, username, name, email, phone, profilePicPath, aboutMe, positionNames, positionNamesShort, isOnBoard);
     }
 
     public static List<Payment> getPayments(int userId) {
@@ -121,7 +155,7 @@ public final class DbAccessor {
                 "SELECT" +
                 "      startdate," +
                 "      monthlypayment" +
-                "    FROM PaymentSchedule" +
+                "    FROM PaymentSchedules" +
                 "    WHERE" +
                 "      userid=" + userId +
                 "    ORDER BY\n" +

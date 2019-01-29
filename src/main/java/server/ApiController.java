@@ -22,7 +22,7 @@ public class ApiController {
     }
 
     @CrossOrigin
-    @GetMapping("/users/{userId}/paymentschedule")
+    @GetMapping("/users/{userId}/paymentschedules")
     @ResponseBody
     public PaymentSchedule[] getUserPaymentSchedules(
             @PathVariable int userId) {
@@ -31,9 +31,18 @@ public class ApiController {
     }
 
     @CrossOrigin
-    @GetMapping("/users/{userId}/payments")
+    @GetMapping("/users/{userId}/fees/payments")
     @ResponseBody
-    public PaymentDetail getUserPaymentDetail(
+    public Payment[] getUserPayments(
+            @PathVariable int userId) {
+
+        return DbAccessor.getPayments(userId).toArray(new Payment[0]);
+    }
+
+    @CrossOrigin
+    @GetMapping("/users/{userId}/fees/paymentsummary")
+    @ResponseBody
+    public PaymentDetail getUserPaymentSummary(
             @PathVariable int userId) {
 
         List<PaymentSchedule> schedules = new ArrayList<>(DbAccessor.getPaymentSchedules(userId));
@@ -76,6 +85,83 @@ public class ApiController {
             expectedContribution += (monthDiff * schedules.get(i).getMonthlyPayment());
         }
 
-        return new PaymentDetail(totalContribution, dateLastContributed, monthlyPayment, (expectedContribution - totalContribution), nextPaymentDate, schedules.toArray(new PaymentSchedule[0]), payments.toArray(new Payment[0]));
+        return new PaymentDetail(totalContribution, dateLastContributed, monthlyPayment, (expectedContribution - totalContribution), nextPaymentDate);
+    }
+
+    @CrossOrigin
+    @GetMapping("/users/{userId}/fees/monthlybreakdown")
+    @ResponseBody
+    public FeeBreakdown[] getUserMonthlyBreakdown(
+            @PathVariable int userId) {
+
+        List<PaymentSchedule> schedules = new ArrayList<>(DbAccessor.getPaymentSchedules(userId));
+        List<Payment> payments = new ArrayList<>(DbAccessor.getPayments(userId));
+
+        List<FeeBreakdown> monthlyFees = new ArrayList<>();
+
+        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime beginningOfThisMonth = LocalDateTime.of(now.getYear(), now.getMonth(), 1, 0, 0);
+
+        int schedIndex = 0;
+        int numSchedules = schedules.size();
+
+        int payIndex = 0;
+        int numPayments = payments.size();
+
+        LocalDateTime xDate = schedules.get(0).getStartDateAsDate();
+
+        while (xDate.isBefore(beginningOfThisMonth) || xDate.isEqual(beginningOfThisMonth)) {
+
+            // If we are in the last schedule, or the current schedule is still good
+            if (((schedIndex + 1) >= numSchedules) || (xDate.isBefore(schedules.get(schedIndex + 1).getStartDateAsDate()))) {
+
+                int thisMonthPaymentDue = schedules.get(schedIndex).getMonthlyPayment();
+                int thisMonthPaid = 0;
+                LocalDateTime datePaid = null;
+
+                while ((thisMonthPaymentDue > 0) && payIndex < numPayments) {
+                    if (datePaid == null) {
+                        datePaid = payments.get(payIndex).getPaymentDateAsDate();
+                    }
+
+                    // Figure out which payment covers this month's payment
+                    if (payments.get(payIndex).getAmount() == thisMonthPaymentDue) {
+                        thisMonthPaid += thisMonthPaymentDue;
+                        thisMonthPaymentDue = 0;
+                        payments.get(payIndex).setAmount(0);
+                        payIndex++;
+                    } else if (payments.get(payIndex).getAmount() > thisMonthPaymentDue) {
+                        thisMonthPaid += thisMonthPaymentDue;
+                        payments.get(payIndex).setAmount(payments.get(payIndex).getAmount() - thisMonthPaymentDue);
+                        thisMonthPaymentDue = 0;
+                    } else {
+                        thisMonthPaid += payments.get(payIndex).getAmount();
+                        thisMonthPaymentDue -= payments.get(payIndex).getAmount();
+                        payments.get(payIndex).setAmount(0);
+                        payIndex++;
+                    }
+                }
+
+                int daysLate = 0;
+                if (datePaid != null) {
+                    daysLate = (int)ChronoUnit.DAYS.between(xDate, datePaid);
+                } else {
+                    daysLate = (int)ChronoUnit.DAYS.between(LocalDateTime.now(), xDate);
+                }
+
+                if (daysLate < 0) {
+                    daysLate = 0;
+                }
+
+                monthlyFees.add(new FeeBreakdown(xDate, datePaid, daysLate, thisMonthPaid, schedules.get(schedIndex).getMonthlyPayment(), Math.max(schedules.get(schedIndex).getMonthlyPayment() - thisMonthPaid, 0)));
+                System.out.println(monthlyFees.get(monthlyFees.size()-1));
+
+                xDate = xDate.plus(1, ChronoUnit.MONTHS);
+            } else {
+                schedIndex++;
+            }
+        }
+
+        return monthlyFees.toArray(new FeeBreakdown[0]);
     }
 }

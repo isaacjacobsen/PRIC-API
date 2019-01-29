@@ -4,7 +4,7 @@ import java.time.LocalDateTime;
 
 public class Payment {
     private final LocalDateTime paymentDate;
-    private final int amount;
+    private int amount;
 
     public Payment(LocalDateTime paymentDate, int amount) {
         this.paymentDate = paymentDate;
@@ -21,5 +21,9 @@ public class Payment {
 
     public int getAmount() {
         return amount;
+    }
+
+    protected void setAmount(int amount) {
+        this.amount = amount;
     }
 }
