@@ -2,14 +2,14 @@ package server;
 
 import java.time.LocalDateTime;
 
-public class PaymentDetail {
+public class PaymentSummary {
     private final int totalContributed;
     private final LocalDateTime dateLastContributed;
     private final int monthlyPayment;
     private final int amountOutstanding;
     private final LocalDateTime nextPaymentDate;
 
-    public PaymentDetail(int totalContributed, LocalDateTime dateLastContributed, int monthlyPayment, int amountOutstanding, LocalDateTime nextPaymentDate) {
+    public PaymentSummary(int totalContributed, LocalDateTime dateLastContributed, int monthlyPayment, int amountOutstanding, LocalDateTime nextPaymentDate) {
         this.totalContributed = totalContributed;
         this.dateLastContributed = dateLastContributed;
         this.monthlyPayment = monthlyPayment;

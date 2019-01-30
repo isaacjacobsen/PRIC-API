@@ -1,9 +1,15 @@
 package server;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.time.*;
+
+import org.apache.commons.io.IOUtils;
 import org.springframework.web.bind.annotation.*;
+
+import javax.servlet.http.HttpServletResponse;
 
 
 @RestController
@@ -22,7 +28,19 @@ public class ApiController {
     }
 
     @CrossOrigin
-    @GetMapping("/users/{userId}/paymentschedules")
+    @GetMapping("/users/{userId}/profilepicture")
+    @ResponseBody
+    public byte[] getImageAsByteArray(
+            @PathVariable int userId) throws IOException {
+        InputStream in = ApiController.class.getResourceAsStream("/images/" + userId + "_profile_picture.jpg");
+        if (in == null) {
+            in = ApiController.class.getResourceAsStream("/images/no_profile_pic.jpg");
+        }
+        return IOUtils.toByteArray(in);
+    }
+
+    @CrossOrigin
+    @GetMapping("/users/{userId}/fees/paymentschedules")
     @ResponseBody
     public PaymentSchedule[] getUserPaymentSchedules(
             @PathVariable int userId) {
@@ -42,7 +60,7 @@ public class ApiController {
     @CrossOrigin
     @GetMapping("/users/{userId}/fees/paymentsummary")
     @ResponseBody
-    public PaymentDetail getUserPaymentSummary(
+    public PaymentSummary getUserPaymentSummary(
             @PathVariable int userId) {
 
         List<PaymentSchedule> schedules = new ArrayList<>(DbAccessor.getPaymentSchedules(userId));
@@ -85,7 +103,7 @@ public class ApiController {
             expectedContribution += (monthDiff * schedules.get(i).getMonthlyPayment());
         }
 
-        return new PaymentDetail(totalContribution, dateLastContributed, monthlyPayment, (expectedContribution - totalContribution), nextPaymentDate);
+        return new PaymentSummary(totalContribution, dateLastContributed, monthlyPayment, (expectedContribution - totalContribution), nextPaymentDate);
     }
 
     @CrossOrigin
