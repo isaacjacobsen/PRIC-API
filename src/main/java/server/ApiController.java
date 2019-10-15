@@ -30,9 +30,21 @@ public class ApiController {
     @CrossOrigin
     @GetMapping("/users/{userId}/profilepicture")
     @ResponseBody
-    public byte[] getImageAsByteArray(
+    public byte[] getProfilePictureAsByteArray(
             @PathVariable int userId) throws IOException {
         InputStream in = ApiController.class.getResourceAsStream("/images/" + userId + "_profile_picture.jpg");
+        if (in == null) {
+            in = ApiController.class.getResourceAsStream("/images/no_profile_pic.jpg");
+        }
+        return IOUtils.toByteArray(in);
+    }
+
+    @CrossOrigin
+    @GetMapping("/users/{userId}/backgroundpicture")
+    @ResponseBody
+    public byte[] getBackgroundImageAsByteArray(
+            @PathVariable int userId) throws IOException {
+        InputStream in = ApiController.class.getResourceAsStream("/images/" + userId + "_background.jpg");
         if (in == null) {
             in = ApiController.class.getResourceAsStream("/images/no_profile_pic.jpg");
         }
