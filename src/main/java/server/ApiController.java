@@ -67,17 +67,13 @@ public class ApiController {
         List<Payment> payments = new ArrayList<>(DbAccessor.getPayments(userId));
 
         LocalDateTime now = LocalDateTime.now();
-        LocalDateTime beginningOfThisMonth = LocalDateTime.of(now.getYear(), now.getMonth(), 1, 0, 0);
+        LocalDateTime thisMonthBegin = LocalDateTime.of(now.getYear(), now.getMonth(), 1, 0, 0);
 
         // Total Contribution
-        int totalContribution = 0;
-        for (Payment p : payments) {
-            totalContribution += p.getAmount();
-        }
-
+        int totalContribution = payments.stream().mapToInt(p -> p.getAmount()).sum();
 
         LocalDateTime dateLastContributed = payments.get(payments.size() - 1).getPaymentDateAsDate();
-        LocalDateTime nextPaymentDate = beginningOfThisMonth.plus(1, ChronoUnit.MONTHS);
+        LocalDateTime nextPaymentDate = thisMonthBegin.plus(1, ChronoUnit.MONTHS);
         int monthlyPayment = schedules.get(schedules.size() - 1).getMonthlyPayment();
 
         // Expected Contribution
@@ -112,7 +108,10 @@ public class ApiController {
     public FeeBreakdown[] getUserMonthlyBreakdown(
             @PathVariable int userId) {
 
+        // Get the payment schedule for the user
         List<PaymentSchedule> schedules = new ArrayList<>(DbAccessor.getPaymentSchedules(userId));
+
+        // Get the payments that have been made by the user
         List<Payment> payments = new ArrayList<>(DbAccessor.getPayments(userId));
 
         List<FeeBreakdown> monthlyFees = new ArrayList<>();
@@ -128,15 +127,17 @@ public class ApiController {
 
         LocalDateTime xDate = schedules.get(0).getStartDateAsDate();
 
+        // Keep getting monthly fees until we're past this month
         while (xDate.isBefore(beginningOfThisMonth) || xDate.isEqual(beginningOfThisMonth)) {
 
-            // If we are in the last schedule, or the current schedule is still good
+            // If we are in the last schedule, or we're still working with the current schedule (hasn't gone to the next schedule)
             if (((schedIndex + 1) >= numSchedules) || (xDate.isBefore(schedules.get(schedIndex + 1).getStartDateAsDate()))) {
 
                 int thisMonthPaymentDue = schedules.get(schedIndex).getMonthlyPayment();
                 int thisMonthPaid = 0;
                 LocalDateTime datePaid = null;
 
+                // If there is still monthly payments due and you haven't exhausted all the payments
                 while ((thisMonthPaymentDue > 0) && payIndex < numPayments) {
                     if (datePaid == null) {
                         datePaid = payments.get(payIndex).getPaymentDateAsDate();
@@ -162,17 +163,15 @@ public class ApiController {
 
                 int daysLate = 0;
                 if (datePaid != null) {
-                    daysLate = (int)ChronoUnit.DAYS.between(xDate, datePaid);
+                    daysLate = Math.max((int)ChronoUnit.DAYS.between(xDate, datePaid), 0);
                 } else {
-                    daysLate = (int)ChronoUnit.DAYS.between(LocalDateTime.now(), xDate);
+                    daysLate = Math.max((int)ChronoUnit.DAYS.between(LocalDateTime.now(), xDate), 0);
                 }
 
-                if (daysLate < 0) {
-                    daysLate = 0;
-                }
+                int thisMonthOutstanding = Math.max(thisMonthPaymentDue - thisMonthPaid, 0);
 
-                monthlyFees.add(new FeeBreakdown(xDate, datePaid, daysLate, thisMonthPaid, schedules.get(schedIndex).getMonthlyPayment(), Math.max(schedules.get(schedIndex).getMonthlyPayment() - thisMonthPaid, 0)));
-                System.out.println(monthlyFees.get(monthlyFees.size()-1));
+                monthlyFees.add(new FeeBreakdown(xDate, datePaid, daysLate, thisMonthPaid, thisMonthPaymentDue, thisMonthOutstanding));
+                System.out.println(monthlyFees.get(monthlyFees.size()-1).toString());
 
                 xDate = xDate.plus(1, ChronoUnit.MONTHS);
             } else {
