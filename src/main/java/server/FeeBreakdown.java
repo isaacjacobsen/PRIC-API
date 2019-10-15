@@ -27,7 +27,7 @@ public class FeeBreakdown {
         return dueDate;
     }
 
-    @JsonProperty("DueDate")
+    @JsonProperty("dueDate")
     public String getDueDate() {
         return dueDate.toString();
     }
@@ -36,7 +36,7 @@ public class FeeBreakdown {
         return datePaid;
     }
 
-    @JsonProperty("DatePaid")
+    @JsonProperty("datePaid")
     public String getDatePaid() {
         if (datePaid == null) {
             return "null";
@@ -44,22 +44,22 @@ public class FeeBreakdown {
         return datePaid.toString();
     }
 
-    @JsonProperty("DaysLate")
+    @JsonProperty("daysLate")
     public int getDaysLate() {
         return daysLate;
     }
 
-    @JsonProperty("AmountPaid")
+    @JsonProperty("amountPaid")
     public int getAmountPaid() {
         return amountPaid;
     }
 
-    @JsonProperty("AmountExpected")
+    @JsonProperty("amountExpected")
     public int getAmountExpected() {
         return amountExpected;
     }
 
-    @JsonProperty("AmountOutstanding")
+    @JsonProperty("amountOutstanding")
     public int getAmountOutstanding() {
         return amountOutstanding;
     }

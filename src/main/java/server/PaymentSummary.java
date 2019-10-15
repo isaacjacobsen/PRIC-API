@@ -19,27 +19,27 @@ public class PaymentSummary {
         this.nextPaymentDate = nextPaymentDate;
     }
 
-    @JsonProperty("TotalContributed")
+    @JsonProperty("totalContributed")
     public int getTotalContributed() {
         return totalContributed;
     }
 
-    @JsonProperty("DateLastContributed")
+    @JsonProperty("dateLastContributed")
     public String getDateLastContributed() {
         return dateLastContributed.toString();
     }
 
-    @JsonProperty("MonthlyPayment")
+    @JsonProperty("monthlyPayment")
     public int getMonthlyPayment() {
         return monthlyPayment;
     }
 
-    @JsonProperty("AmountOutstanding")
+    @JsonProperty("amountOutstanding")
     public int getAmountOutstanding() {
         return amountOutstanding;
     }
 
-    @JsonProperty("NextPaymentDate")
+    @JsonProperty("nextPaymentDate")
     public String getNextPaymentDate() {
         return nextPaymentDate.toString();
     }

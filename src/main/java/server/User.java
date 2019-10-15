@@ -1,5 +1,7 @@
 package server;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -31,38 +33,47 @@ public class User {
         }
     }
 
+    @JsonProperty("userId")
     public int getUserId() {
         return userId;
     }
 
+    @JsonProperty("username")
     public String getUsername() {
         return username;
     }
 
+    @JsonProperty("name")
     public String getName() {
         return name;
     }
 
+    @JsonProperty("email")
     public String getEmail() {
         return email;
     }
 
+    @JsonProperty("phone")
     public String getPhone() {
         return phone;
     }
 
+    @JsonProperty("profilePicPath")
     public String getProfilePicPath() {
         return profilePicPath;
     }
 
+    @JsonProperty("aboutMe")
     public String getAboutMe() {
         return aboutMe;
     }
 
+    @JsonProperty("positions")
     public Position[] getPositions() {
         return positions.toArray(new Position[0]);
     }
 
+    @JsonProperty("isOnBoard")
     public boolean getIsOnBoard() {
         return isOnBoard;
     }

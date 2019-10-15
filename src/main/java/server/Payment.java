@@ -17,12 +17,12 @@ public class Payment {
         return paymentDate;
     }
 
-    @JsonProperty("PaymentDate")
+    @JsonProperty("paymentDate")
     public String getPaymentDate() {
         return paymentDate.toString();
     }
 
-    @JsonProperty("Amount")
+    @JsonProperty("amount")
     public int getAmount() {
         return amount;
     }
