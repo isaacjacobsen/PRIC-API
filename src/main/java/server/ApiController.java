@@ -161,12 +161,7 @@ public class ApiController {
                     }
                 }
 
-                int daysLate = 0;
-                if (datePaid != null) {
-                    daysLate = Math.max((int)ChronoUnit.DAYS.between(xDate, datePaid), 0);
-                } else {
-                    daysLate = Math.max((int)ChronoUnit.DAYS.between(LocalDateTime.now(), xDate), 0);
-                }
+                int daysLate = Math.max((int)ChronoUnit.DAYS.between(xDate, (datePaid != null ? datePaid : now)), 0);
 
                 int thisMonthOutstanding = Math.max(thisMonthPaymentDue - thisMonthPaid, 0);
 
