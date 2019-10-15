@@ -1,5 +1,7 @@
 package server;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 import java.time.LocalDateTime;
 
 public class PaymentSummary {
@@ -17,22 +19,27 @@ public class PaymentSummary {
         this.nextPaymentDate = nextPaymentDate;
     }
 
+    @JsonProperty("TotalContributed")
     public int getTotalContributed() {
         return totalContributed;
     }
 
+    @JsonProperty("DateLastContributed")
     public String getDateLastContributed() {
         return dateLastContributed.toString();
     }
 
+    @JsonProperty("MonthlyPayment")
     public int getMonthlyPayment() {
         return monthlyPayment;
     }
 
+    @JsonProperty("AmountOutstanding")
     public int getAmountOutstanding() {
         return amountOutstanding;
     }
 
+    @JsonProperty("NextPaymentDate")
     public String getNextPaymentDate() {
         return nextPaymentDate.toString();
     }
